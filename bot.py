@@ -1,9 +1,10 @@
 import telebot
 import requests
 import time
+import os
 from datetime import datetime
 
-TOKEN = "8245236522:AAHrwysDOzPBnzb4QdrTJ0L3n1P9U4PaIUM"
+TOKEN = os.environ.get('BOT_TOKEN', '8245236522:AAHrwysDOzPBnzb4QdrTJ0L3n1P9U4PaIUM')
 API_BASE = "https://api.coingecko.com/api/v3"
 CACHE_TIMEOUT = 30
 
