@@ -3,12 +3,10 @@ import requests
 import time
 from datetime import datetime
 
-# ========== تنظیمات اصلی ==========
 TOKEN = "8245236522:AAHrwysDOzPBnzb4QdrTJ0L3n1P9U4PaIUM"
 API_BASE = "https://api.coingecko.com/api/v3"
 CACHE_TIMEOUT = 30
 
-# ========== ساختارهای داده ==========
 price_cache = {}
 supported_coins = {
     'bitcoin': {'symbol': 'BTC', 'fa_name': 'بیت‌کوین'},
@@ -26,12 +24,9 @@ supported_coins = {
     'stellar': {'symbol': 'XLM', 'fa_name': 'استلار'}
 }
 
-# ========== مقداردهی ربات ==========
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
-# ========== توابع کمکی ==========
 def get_price_data(coin_id):
-    """دریافت اطلاعات قیمت از API با کشینگ"""
     current_time = time.time()
     
     if coin_id in price_cache:
@@ -66,7 +61,6 @@ def get_price_data(coin_id):
     return None
 
 def format_currency(value):
-    """فرمت‌دهی اعداد مالی"""
     try:
         if value >= 1000000000:
             return f"{value/1000000000:.2f} میلیارد"
@@ -79,7 +73,6 @@ def format_currency(value):
         return "0"
 
 def find_coin(query):
-    """پیدا کردن کوین بر اساس ورودی کاربر"""
     query = query.lower().strip()
     
     if query in supported_coins:
@@ -97,12 +90,10 @@ def find_coin(query):
     
     return None
 
-# ========== دستورات ربات ==========
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    """راه‌اندازی ربات"""
     response = """
-به ربات **قیمت ارزهای دیجیتال** خوش آمدید.
+به ربات قیمت ارزهای دیجیتال خوش آمدید.
 
 این ربات قیمت لحظه‌ای ارزهای دیجیتال را از منبع معتبر دریافت می‌کند.
 
@@ -121,7 +112,6 @@ def handle_start(message):
 
 @bot.message_handler(commands=['help'])
 def handle_help(message):
-    """راهنمای استفاده"""
     response = """
 راهنمای استفاده از ربات:
 
@@ -146,7 +136,6 @@ def handle_help(message):
 
 @bot.message_handler(commands=['list'])
 def handle_list(message):
-    """نمایش لیست ارزها"""
     response = "ارزهای دیجیتال پشتیبانی شده:\n\n"
     
     for coin_id, info in supported_coins.items():
@@ -158,7 +147,6 @@ def handle_list(message):
 
 @bot.message_handler(commands=['info'])
 def handle_info(message):
-    """اطلاعات ربات"""
     response = """
 اطلاعات ربات قیمت ارز دیجیتال
 
@@ -173,14 +161,12 @@ def handle_info(message):
 - حجم معاملات و ارزش بازار
 - پشتیبانی از نام فارسی و انگلیسی
 - کشینگ برای سرعت بیشتر
-
 توسعه‌دهنده: امیرمهدی عزیزی 
 """
     bot.send_message(message.chat.id, response)
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
-    """پردازش درخواست قیمت"""
     user_input = message.text.strip()
     
     coin_id = find_coin(user_input)
@@ -230,6 +216,5 @@ def handle_message(message):
     
     bot.reply_to(message, response)
 
-# ========== اجرای ربات ==========
 if __name__ == "__main__":
     bot.infinity_polling(timeout=20, long_polling_timeout=10)
