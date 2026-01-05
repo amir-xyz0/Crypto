@@ -3,11 +3,14 @@ import requests
 import time
 import os
 from datetime import datetime
+from flask import Flask, request
 
-TOKEN = os.environ.get('BOT_TOKEN', '8245236522:AAHrwysDOzPBnzb4QdrTJ0L3n1P9U4PaIUM')
+# ========== تنظیمات اصلی ==========
+TOKEN = os.environ.get('BOT_TOKEN')
 API_BASE = "https://api.coingecko.com/api/v3"
 CACHE_TIMEOUT = 30
 
+# ========== ساختارهای داده ==========
 price_cache = {}
 supported_coins = {
     'bitcoin': {'symbol': 'BTC', 'fa_name': 'بیت‌کوین'},
@@ -25,9 +28,13 @@ supported_coins = {
     'stellar': {'symbol': 'XLM', 'fa_name': 'استلار'}
 }
 
+# ========== مقداردهی ربات ==========
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
+app = Flask(__name__)
 
+# ========== توابع کمکی ==========
 def get_price_data(coin_id):
+    """دریافت اطلاعات قیمت از API با کشینگ"""
     current_time = time.time()
     
     if coin_id in price_cache:
@@ -62,6 +69,7 @@ def get_price_data(coin_id):
     return None
 
 def format_currency(value):
+    """فرمت‌دهی اعداد مالی"""
     try:
         if value >= 1000000000:
             return f"{value/1000000000:.2f} میلیارد"
@@ -74,6 +82,7 @@ def format_currency(value):
         return "0"
 
 def find_coin(query):
+    """پیدا کردن کوین بر اساس ورودی کاربر"""
     query = query.lower().strip()
     
     if query in supported_coins:
@@ -91,8 +100,10 @@ def find_coin(query):
     
     return None
 
+# ========== دستورات ربات ==========
 @bot.message_handler(commands=['start'])
 def handle_start(message):
+    """راه‌اندازی ربات"""
     response = """
 به ربات قیمت ارزهای دیجیتال خوش آمدید.
 
@@ -113,6 +124,7 @@ def handle_start(message):
 
 @bot.message_handler(commands=['help'])
 def handle_help(message):
+    """راهنمای استفاده"""
     response = """
 راهنمای استفاده از ربات:
 
@@ -137,6 +149,7 @@ def handle_help(message):
 
 @bot.message_handler(commands=['list'])
 def handle_list(message):
+    """نمایش لیست ارزها"""
     response = "ارزهای دیجیتال پشتیبانی شده:\n\n"
     
     for coin_id, info in supported_coins.items():
@@ -148,6 +161,7 @@ def handle_list(message):
 
 @bot.message_handler(commands=['info'])
 def handle_info(message):
+    """اطلاعات ربات"""
     response = """
 اطلاعات ربات قیمت ارز دیجیتال
 
@@ -162,12 +176,14 @@ def handle_info(message):
 - حجم معاملات و ارزش بازار
 - پشتیبانی از نام فارسی و انگلیسی
 - کشینگ برای سرعت بیشتر
+
 توسعه‌دهنده: امیرمهدی عزیزی 
 """
     bot.send_message(message.chat.id, response)
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    """پردازش درخواست قیمت"""
     user_input = message.text.strip()
     
     coin_id = find_coin(user_input)
@@ -217,5 +233,48 @@ def handle_message(message):
     
     bot.reply_to(message, response)
 
+# ========== وب‌سرور برای Render ==========
+@app.route('/')
+def home():
+    return "✅ ربات قیمت ارز دیجیتال فعال است!"
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    """دریافت به‌روزرسانی‌های تلگرام"""
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return 'OK', 200
+    return 'Forbidden', 403
+
+def set_webhook():
+    """تنظیم webhook روی سرور Render"""
+    try:
+        # آدرس خودکار تشخیص داده می‌شود
+        bot.remove_webhook()
+        time.sleep(1)
+        
+        # در Render، آدرس از متغیر محیطی خوانده می‌شود
+        render_url = os.environ.get('RENDER_EXTERNAL_URL')
+        if render_url:
+            webhook_url = f"{render_url}/webhook"
+            bot.set_webhook(url=webhook_url)
+            print(f"Webhook set to: {webhook_url}")
+            return True
+        return False
+    except Exception as e:
+        print(f"Error setting webhook: {e}")
+        return False
+
+# ========== اجرای برنامه ==========
 if __name__ == "__main__":
-    bot.infinity_polling(timeout=20, long_polling_timeout=10)
+    # اگر در Render اجرا می‌شود، از webhook استفاده کن
+    if 'RENDER' in os.environ:
+        print("🚀 Running on Render with webhook...")
+        set_webhook()
+        app.run(host='0.0.0.0', port=10000)
+    else:
+        # حالت توسعه (polling)
+        print("🔧 Running in development mode (polling)...")
+        bot.infinity_polling(timeout=20, long_polling_timeout=10)
