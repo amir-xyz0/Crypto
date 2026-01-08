@@ -1,4 +1,4 @@
-# در ابتدای فایل فقط این imports باشند:
+from database import Database
 import os
 import logging
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
