@@ -1,15 +1,11 @@
+# در ابتدای فایل فقط این imports باشند:
+import os
 import logging
-from datetime import datetime
-from telegram import Update
-from telegram.ext import (
-    Application, CommandHandler, MessageHandler, 
-    filters, CallbackContext, ConversationHandler
-)
-from config import Config
-from api_clients import APIClient
-from messages import Messages
-from keyboards import Keyboards
-from database import Database
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from dotenv import load_dotenv
+import requests
+import time
 
 # تنظیمات لاگ
 logging.basicConfig(
