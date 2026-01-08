@@ -8,5 +8,3 @@ services:
     envVars:
       - key: BOT_TOKEN
         sync: false
-      - key: ALPHA_VANTAGE_KEY
-        sync: false
