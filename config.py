@@ -5,8 +5,7 @@ load_dotenv()
 
 class Config:
     # تلگرام
-    TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-    
+    TELEGRAM_TOKEN = os.getenv('BOT_TOKEN')
     # APIها
     COINGECKO_API = "https://api.coingecko.com/api/v3"
     EXCHANGE_RATE_API = "https://api.exchangerate-api.com/v4/latest/USD"
